@@ -34,6 +34,7 @@
  */
 #include "options.h"
 #include "rtpmap.h"
+#include <strings.h>
 
 #ifdef HAVE_CONFIG_H
     #include <config.h>
@@ -94,6 +95,8 @@ static wr_output_format __output_format_arg(const char *format)
         return WR_OUTPUT_PCAP;
     if (!strcasecmp(format, "rtpdump"))
         return WR_OUTPUT_RTPDUMP;
+    if (!strcasecmp(format, "network"))
+        return WR_OUTPUT_NETWORK;
     return WR_OUTPUT_UNKNOWN;
 }
 

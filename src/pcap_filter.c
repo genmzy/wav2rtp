@@ -176,7 +176,7 @@ wr_errorcode_t wr_pcap_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t e
                 if ((retval=__init_udp_header(&udp_header)) != WR_OK){
                     return retval;
                 }
-                wr_rtp_header_init(&rtp_header, packet);
+                wr_rtp_header_init(&rtp_header, packet); // fill rtp header with packet
 
                 ip_header.ip_len = sizeof(ip_header)  + 
                                    sizeof(udp_header) +                                   
@@ -200,13 +200,14 @@ wr_errorcode_t wr_pcap_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t e
                 wr_pcap_timeval_copy(&(ph.ts), &(packet->lowlevel_timestamp));
                 ph.len = ph.caplen;
 
-                {
+                { // write udp to pcap file
                     int retval;
                     wr_pcap_filter_state_t * state = (wr_pcap_filter_state_t * ) filter->state;
                     if (!filter->state){
                         wr_set_error("internal state of the output filter was not initialized");
                         return WR_FATAL;
                     }
+                    // ethernet-frame-header | ip-header | udp-header | rtp-header | ... rtp-content ... | ethernet-frame-tail
                     retval = fwrite(&ph, sizeof(ph), 1, state->file);
                     retval += fwrite(&e_header, sizeof(e_header), 1, state->file);
                     retval += fwrite(&ip_header, sizeof(ip_header), 1, state->file);

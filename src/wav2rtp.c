@@ -53,6 +53,7 @@
 #include "gamma_delay_filter.h"
 #include "log_filter.h"
 #include "sipp_filter.h"
+#include "network_filter.h"
 
 #include "speex_codec.h"
 #include "dummy_codec.h"
@@ -91,6 +92,7 @@ int main(int argc, char ** argv)
     wr_rtp_filter_t wavfile_output_filter;
     wr_rtp_filter_t sipp_filter;
     wr_rtp_filter_t sort_filter;
+    wr_rtp_filter_t network_filter;
 
     wr_errorcode_t retval;
 
@@ -129,11 +131,16 @@ int main(int argc, char ** argv)
     wr_rtp_filter_create(&sort_filter, "sort filter", &wr_sort_filter_notify);
     wr_rtp_filter_create(&wavfile_output_filter, "sort filter", &wr_wavfile_output_filter_notify);
 
+    #ifdef __linux__
+    wr_rtp_filter_create(&network_filter, "remote rtp filter", &wr_network_filter_notify);
+    #endif
+
     wr_rtp_filter_append_observer(&wavfile_filter, &gamma_delay_filter);
     wr_rtp_filter_append_observer(&gamma_delay_filter, &uniform_delay_filter);
     wr_rtp_filter_append_observer(&uniform_delay_filter, &sort_filter);
     wr_rtp_filter_append_observer(&sort_filter, &markov_losses_filter);
     wr_rtp_filter_append_observer(&markov_losses_filter, &independent_losses_filter);
+    wr_rtp_filter_append_observer(&independent_losses_filter, &network_filter);
 
     wr_rtp_filter_append_observer(&independent_losses_filter, &log_filter);
     wr_rtp_filter_append_observer(&independent_losses_filter, wr_options.output_format == WR_OUTPUT_RTPDUMP ? &rtpdump_filter : &pcap_filter);

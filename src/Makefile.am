@@ -8,6 +8,7 @@ common_sources = rtpmap.c rtpmap.h options.c options.h codecapi.h \
 	contrib/ranlib/com.c  contrib/ranlib/linpack.c  contrib/ranlib/ranlib.c  contrib/ranlib/ranlib.h \
 	rtpapi.c rtpapi.h \
 	wavfile_filter.c wavfile_filter.h \
+	network_filter.c network_filter.h \
 	pcap_filter.c pcap_filter.h \
 	rtpdump_filter.c rtpdump_filter.h \
 	wavfile_output_filter.c wavfile_output_filter.h \
@@ -21,7 +22,7 @@ common_sources = rtpmap.c rtpmap.h options.c options.h codecapi.h \
 	sort_filter.c sort_filter.h \
 	g711a_codec.c g711a_codec.h \
 	wincompat.c wincompat.h \
-	misc.c misc.h
+	misc.c misc.h 
 
 wav2rtp_SOURCES = wav2rtp.c $(common_sources)
 

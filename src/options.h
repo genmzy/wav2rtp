@@ -46,6 +46,7 @@
 typedef enum __wr_output_format {
     WR_OUTPUT_PCAP,
     WR_OUTPUT_RTPDUMP,
+    WR_OUTPUT_NETWORK,
     WR_OUTPUT_UNKNOWN
 } wr_output_format;
 

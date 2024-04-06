@@ -11,8 +11,22 @@
 /src/wav2rtp
 /stamp-h1
 /test-driver
+.deps/
+.dirstamp
+compile_commands.json
+src/pcap_test
+.cache/
+# launch.json
+.vscode/
 
 Makefile
 Makefile.in
 
 *.o
+*.log
+*.trs
+*.wav
+*.pcap
+*.rtpdump
+
+_project.lua

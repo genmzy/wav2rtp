@@ -131,7 +131,7 @@ wr_errorcode_t wr_wavfile_filter_start(wr_rtp_filter_t * filter)
             continue;
         }
         output_buffer_size = (*codec->encode)(codec->state, input_buffer, output_buffer);
-        wr_rtp_packet_add_frame(&rtp_packet, output_buffer, output_buffer_size,  1000 * input_buffer_size / file_info.samplerate);
+        wr_rtp_packet_add_frame(&rtp_packet, (unsigned char *)output_buffer, output_buffer_size,  1000 * input_buffer_size / file_info.samplerate);
         timeval_increment(&packet_end_timestamp, 1e6 * input_buffer_size / file_info.samplerate);
         rtp_timestamp += input_buffer_size;
         frames_count++;
