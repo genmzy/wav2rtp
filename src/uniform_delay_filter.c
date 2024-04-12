@@ -37,7 +37,7 @@
 #include "uniform_delay_filter.h"
 
 
-wr_errorcode_t wr_uniform_delay_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet)
+wr_errorcode_t wr_uniform_delay_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet, int asc)
 {
     switch(event){
 
@@ -50,7 +50,7 @@ wr_errorcode_t wr_uniform_delay_filter_notify(wr_rtp_filter_t * filter, wr_event
                 state->max_delay = iniparser_getnonnegativeint(wr_options.output_options, "uniform_delay:max_delay", 0);
             }
             filter->state = (void*)state;
-            wr_rtp_filter_notify_observers(filter, event, packet);
+            wr_rtp_filter_notify_observers(filter, event, packet, asc);
             return WR_OK;
         }
         case NEW_PACKET: {
@@ -58,18 +58,18 @@ wr_errorcode_t wr_uniform_delay_filter_notify(wr_rtp_filter_t * filter, wr_event
             int delay;
             wr_rtp_packet_t new_packet;
             if (!state->enabled){
-                wr_rtp_filter_notify_observers(filter, event, packet);
+                wr_rtp_filter_notify_observers(filter, event, packet, asc);
                 return WR_OK;
             }
             delay = ignuin(state->min_delay, state->max_delay);
             wr_rtp_packet_copy(&new_packet, packet);
             timeval_increment(&new_packet.lowlevel_timestamp, delay);
-            wr_rtp_filter_notify_observers(filter, event, &new_packet);
+            wr_rtp_filter_notify_observers(filter, event, &new_packet, asc);
             return WR_OK;
         }
         case TRANSMISSION_END: {
             free(filter->state);
-            wr_rtp_filter_notify_observers(filter, event, packet);
+            wr_rtp_filter_notify_observers(filter, event, packet, asc);
             return WR_OK;
         }
     }  

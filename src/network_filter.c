@@ -93,12 +93,12 @@ static int cp2buf(uint8_t *buf, int offset, const void *st, int lst)
     return lst+offset;
 }
 
-wr_errorcode_t wr_network_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet)
+wr_errorcode_t wr_network_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet, int asc)
 {
     switch(event) {
         case TRANSMISSION_START:
             {
-                if (wr_options.output_format != WR_OUTPUT_NETWORK) {
+                if (wr_options.output_format != WR_OUTPUT_NETWORK || !asc) {
                     return WR_OK;
                 }
                 wr_network_filter_context_t *ctx = calloc(1, sizeof(wr_network_filter_context_t));
@@ -120,6 +120,7 @@ wr_errorcode_t wr_network_filter_notify(wr_rtp_filter_t * filter, wr_event_type_
                 ctx->spec = calloc(1, sizeof(struct timespec));
                 ctx->spec->tv_sec = 0;
                 ctx->spec->tv_nsec = 20 /* millisecond */ * 1000 /* microsecond */ * 1000 /* nanosecond */;
+                ctx->asc = iniparser_getboolean(wr_options.output_options, "network:asc", 0);
 
                 filter->state = (void *)ctx;
             }
@@ -127,10 +128,10 @@ wr_errorcode_t wr_network_filter_notify(wr_rtp_filter_t * filter, wr_event_type_
 
         case NEW_PACKET:
             {
-                if (wr_options.output_format != WR_OUTPUT_NETWORK) {
+                wr_network_filter_context_t *ctx = (wr_network_filter_context_t *)(filter->state);
+                if (wr_options.output_format != WR_OUTPUT_NETWORK || asc != ctx->asc) {
                     return WR_OK;
                 }
-                wr_network_filter_context_t *ctx = (wr_network_filter_context_t *)(filter->state);
                 list_iterator_start(&(packet->data_frames));
                 wr_rtp_header_t header;
                 wr_rtp_header_init(&header, packet);

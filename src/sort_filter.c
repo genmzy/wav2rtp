@@ -46,7 +46,7 @@ int wr_rtp_timestamp_comparator(const void *a, const void *b)
 
 
 
-wr_errorcode_t wr_sort_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet)
+wr_errorcode_t wr_sort_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet, int asc)
 {
     switch(event){
 
@@ -57,13 +57,13 @@ wr_errorcode_t wr_sort_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t e
             list_init(&state->buffer);
             list_attributes_comparator(&state->buffer, &wr_rtp_timestamp_comparator);
             filter->state = (void*)state;
-            wr_rtp_filter_notify_observers(filter, event, packet);
+            wr_rtp_filter_notify_observers(filter, event, packet, asc);
             return WR_OK;
         }
         case NEW_PACKET: { 
             wr_sort_filter_state_t * state = (wr_sort_filter_state_t * ) (filter->state);
             if (!state->enabled){
-                wr_rtp_filter_notify_observers(filter, event, packet);
+                wr_rtp_filter_notify_observers(filter, event, packet, asc);
                 return WR_OK;
             }
             wr_rtp_packet_t * new_packet = calloc(1, sizeof(*new_packet));
@@ -73,7 +73,7 @@ wr_errorcode_t wr_sort_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t e
                 wr_rtp_packet_t * first_packet;
                 list_sort(&state->buffer, -1); 
                 first_packet = list_extract_at(&state->buffer, 0);
-                wr_rtp_filter_notify_observers(filter, event, first_packet);
+                wr_rtp_filter_notify_observers(filter, event, first_packet, asc);
                 //wr_rtp_packet_destroy(first_packet);
                 //free(first_packet);
             }
@@ -85,13 +85,13 @@ wr_errorcode_t wr_sort_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t e
             while(list_size(&state->buffer)){
                 wr_rtp_packet_t * packet;
                 packet = list_extract_at(&state->buffer, 0);
-                wr_rtp_filter_notify_observers(filter, NEW_PACKET, packet);
+                wr_rtp_filter_notify_observers(filter, NEW_PACKET, packet, asc);
                 wr_rtp_packet_destroy(packet);
                 free(packet);
             }
             list_destroy(&state->buffer);
             free(state);
-            wr_rtp_filter_notify_observers(filter, event, packet);
+            wr_rtp_filter_notify_observers(filter, event, packet, asc);
             return WR_OK;
         }
     }  

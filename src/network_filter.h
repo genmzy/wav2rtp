@@ -11,10 +11,11 @@
 #include <stdlib.h>
 
 typedef struct __wr_network_filer_context {
-    int socket_fd;                      // local socket descriptor
-    struct sockaddr_in *server_addr;    // remote server address
-    int sended;                         // judge if the first rtp frame sended
+    int socket_fd;                   // local socket descriptor
+    struct sockaddr_in *server_addr; // remote server address
+    int sended;                      // judge if the first rtp frame sended
     struct timespec *spec;
+    int asc;                         // asc or desc
 } wr_network_filter_context_t;
 
 static inline void wr_network_filter_context_safe_free(wr_network_filter_context_t *ctx)
@@ -70,6 +71,6 @@ static inline int wr_parse_url(char *path, struct sockaddr_in *to)
     return 0;
 }
 
-wr_errorcode_t wr_network_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet);
+wr_errorcode_t wr_network_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet, int asc);
 
 #endif // !__NETWORK_FILTER_H

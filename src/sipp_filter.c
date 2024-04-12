@@ -100,7 +100,7 @@ void __print_sipp_scenario(int duration)
 
 
 
-wr_errorcode_t wr_sipp_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet)
+wr_errorcode_t wr_sipp_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet, int asc)
 {
     switch(event){
 
@@ -108,14 +108,14 @@ wr_errorcode_t wr_sipp_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t e
             wr_sipp_filter_state_t * state = calloc(1, sizeof(*state));
             state->enabled = iniparser_getboolean(wr_options.output_options, "sipp:enabled", 1);
             filter->state = (void*)state;
-            wr_rtp_filter_notify_observers(filter, event, packet);
+            wr_rtp_filter_notify_observers(filter, event, packet, asc);
             return WR_OK;
         }
         case NEW_PACKET: {
             double rand;
             wr_sipp_filter_state_t * state = (wr_sipp_filter_state_t * ) (filter->state);
             if (!state->enabled){
-                wr_rtp_filter_notify_observers(filter, event, packet);
+                wr_rtp_filter_notify_observers(filter, event, packet, asc);
                 return WR_OK;
             }
             if (!timerisset(&state->first_timestamp)){
@@ -129,7 +129,7 @@ wr_errorcode_t wr_sipp_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t e
                 state->last_duration += data->length_in_ms;
             }
             list_iterator_stop(&packet->data_frames);
-            wr_rtp_filter_notify_observers(filter, event, packet);
+            wr_rtp_filter_notify_observers(filter, event, packet, asc);
             return WR_OK;
         }
         case TRANSMISSION_END: {
@@ -142,7 +142,7 @@ wr_errorcode_t wr_sipp_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t e
                 __print_sipp_scenario(duration);
             }
             free(state);
-            wr_rtp_filter_notify_observers(filter, event, packet);
+            wr_rtp_filter_notify_observers(filter, event, packet, asc);
             return WR_OK;
         }
     }  

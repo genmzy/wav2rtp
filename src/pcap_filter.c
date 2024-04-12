@@ -32,6 +32,7 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+#include <netinet/in.h>
 #include <stdio.h>
 #ifdef _WIN32
 #include "wincompat.h"
@@ -60,29 +61,33 @@
 #endif
 #endif
 
-wr_errorcode_t __init_ether_header(struct ether_header * e)
+wr_errorcode_t __init_ether_header(struct ether_header * e, int asc)
 {
     struct ether_addr *tmp_addr;
 
     memset(e, 0, sizeof(*e));
     e->ether_type =  htons(0x0800);  /* ethertype IP */
 
+    void *to;
+
     if (!(tmp_addr = ether_aton(iniparser_getstring(wr_options.output_options,  "global:dst_mac", "DE:AD:BE:EF:DE:AD")))){
         wr_set_error("Cannot parse destination ethernet address from config");
         return WR_FATAL;
     }
-    memcpy(e->ether_dhost, tmp_addr->ether_addr_octet, 6);
+    to = asc ? e->ether_dhost : e->ether_shost;
+    memcpy(to, tmp_addr->ether_addr_octet, 6);
 
     if (!(tmp_addr = ether_aton(iniparser_getstring(wr_options.output_options,  "global:src_mac", "AA:BB:CC:DD:EE:FF")))){
         wr_set_error("Cannot parse source ethernet address from config");
         return WR_FATAL;
     }
-    memcpy(e->ether_shost, tmp_addr->ether_addr_octet, 6);
+    to = asc ? e->ether_shost : e->ether_dhost;
+    memcpy(to, tmp_addr->ether_addr_octet, 6);
     return WR_OK;
 }
 
 
-wr_errorcode_t __init_ip_header(struct ip * ip_header)
+wr_errorcode_t __init_ip_header(struct ip * ip_header, int asc)
 {
     memset(ip_header, 0, sizeof(*ip_header));
     ip_header->ip_v = 4;
@@ -93,13 +98,18 @@ wr_errorcode_t __init_ip_header(struct ip * ip_header)
     ip_header->ip_ttl = 64; 
     ip_header->ip_p = IPPROTO_UDP;  /* UDP */
 
-    ip_header->ip_src.s_addr = inet_addr(iniparser_getstring(wr_options.output_options, "global:src_ip", "127.0.0.1"));    
-    if (ip_header->ip_src.s_addr == -1){
+    struct in_addr *header_field;
+
+    header_field = asc ? &(ip_header->ip_src) : &(ip_header->ip_dst);
+    header_field->s_addr = inet_addr(iniparser_getstring(wr_options.output_options, "global:src_ip", "127.0.0.1"));    
+    if (header_field->s_addr == -1){
         wr_set_error("Cannot parse source IP address from config");
         return WR_FATAL;
     }
-    ip_header->ip_dst.s_addr = inet_addr(iniparser_getstring(wr_options.output_options, "global:dst_ip", "127.0.0.2"));
-    if (ip_header->ip_dst.s_addr == -1){
+
+    header_field = asc ? &(ip_header->ip_dst) : &(ip_header->ip_src);
+    header_field->s_addr = inet_addr(iniparser_getstring(wr_options.output_options, "global:dst_ip", "127.0.0.2"));
+    if (header_field->s_addr == -1){
         wr_set_error("Cannot parse destination IP address from config");
         return WR_FATAL;
     }
@@ -107,16 +117,19 @@ wr_errorcode_t __init_ip_header(struct ip * ip_header)
 }
 
 
-wr_errorcode_t __init_udp_header(struct udphdr * udp_header)
+wr_errorcode_t __init_udp_header(struct udphdr * udp_header, int asc)
 {
     memset(udp_header, 0, sizeof(*udp_header));
-    udp_header->uh_sport = htons((short)iniparser_getnonnegativeint(wr_options.output_options,  "global:src_port", 8001));
-    udp_header->uh_dport = htons((short)iniparser_getnonnegativeint(wr_options.output_options, "global:dst_port", 8002));
+    uint16_t *port;
+    port = asc ? &(udp_header->uh_sport) : &(udp_header->uh_dport);
+    *port = htons((short)iniparser_getnonnegativeint(wr_options.output_options,  "global:src_port", 8001));
+    port = asc ? &(udp_header->uh_dport) : &(udp_header->uh_sport);
+    *port = htons((short)iniparser_getnonnegativeint(wr_options.output_options, "global:dst_port", 8002));
     udp_header->uh_sum = 0;
     return WR_OK;
 }
 
-wr_errorcode_t wr_pcap_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet)
+wr_errorcode_t wr_pcap_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet, int asc)
 {
 
     switch(event) {
@@ -167,19 +180,19 @@ wr_errorcode_t wr_pcap_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t e
                         .len = sizeof(ip_header),
                     },
                 };
-                if ((retval=__init_ether_header(&e_header)) != WR_OK){
+                if ((retval=__init_ether_header(&e_header, asc)) != WR_OK){
                     return retval;
                 }
-                if ((retval=__init_ip_header(&ip_header)) != WR_OK){
+                if ((retval=__init_ip_header(&ip_header, asc)) != WR_OK){
                     return retval;
                 }
-                if ((retval=__init_udp_header(&udp_header)) != WR_OK){
+                if ((retval=__init_udp_header(&udp_header, asc)) != WR_OK){
                     return retval;
                 }
                 wr_rtp_header_init(&rtp_header, packet); // fill rtp header with packet
 
-                ip_header.ip_len = sizeof(ip_header)  + 
-                                   sizeof(udp_header) +                                   
+                ip_header.ip_len = sizeof(ip_header)  +
+                                   sizeof(udp_header) +
                                    sizeof(rtp_header);
                 ph.caplen = sizeof(e_header) + ip_header.ip_len;
                 udp_header.uh_ulen = sizeof(udp_header) + sizeof(rtp_header);

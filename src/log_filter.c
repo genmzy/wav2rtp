@@ -37,7 +37,7 @@
 #include "log_filter.h"
 
 
-wr_errorcode_t wr_log_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet)
+wr_errorcode_t wr_log_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet, int asc)
 {
     switch(event){
 
@@ -45,14 +45,14 @@ wr_errorcode_t wr_log_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t ev
             wr_log_filter_state_t * state = calloc(1, sizeof(*state));
             state->enabled = iniparser_getboolean(wr_options.output_options, "log:enabled", 1);
             filter->state = (void*)state;
-            wr_rtp_filter_notify_observers(filter, event, packet);
+            wr_rtp_filter_notify_observers(filter, event, packet, asc);
             return WR_OK;
         }
         case NEW_PACKET: {
             char diff[256];
             wr_log_filter_state_t * state = (wr_log_filter_state_t * ) (filter->state);
             if (!state->enabled){
-                wr_rtp_filter_notify_observers(filter, event, packet);
+                wr_rtp_filter_notify_observers(filter, event, packet, asc);
                 return WR_OK;
             }
             memset(diff, 0, sizeof(diff));
@@ -81,12 +81,12 @@ wr_errorcode_t wr_log_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t ev
                 packet->payload_type
             );
             memcpy(&state->prev_timestamp, &packet->lowlevel_timestamp, sizeof(struct timeval));
-            wr_rtp_filter_notify_observers(filter, event, packet);
+            wr_rtp_filter_notify_observers(filter, event, packet, asc);
             return WR_OK;
         }
         case TRANSMISSION_END: {
             free(filter->state);
-            wr_rtp_filter_notify_observers(filter, event, packet);
+            wr_rtp_filter_notify_observers(filter, event, packet, asc);
             return WR_OK;
         }
     }  

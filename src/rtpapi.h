@@ -191,7 +191,7 @@ typedef struct __wr_rtp_filter {
     struct __wr_rtp_filter * observers[MAX_OBSERVERS];
 
     /** observer interface */
-    wr_errorcode_t (*notify)(struct __wr_rtp_filter * filter, wr_event_type_t event, wr_rtp_packet_t * packet);
+    wr_errorcode_t (*notify)(struct __wr_rtp_filter * filter, wr_event_type_t event, wr_rtp_packet_t * packet, int asc);
 
     /** internal state of the filter */
     void * state;
@@ -206,7 +206,7 @@ typedef struct __wr_rtp_filter {
  * @param notify part of observer interface, invoked when object is notified
  */
 void wr_rtp_filter_create(wr_rtp_filter_t * filter, char *name, 
-        wr_errorcode_t (*notify)(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet) 
+        wr_errorcode_t (*notify)(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet, int asc) 
     );
 
 /**
@@ -217,13 +217,13 @@ void wr_rtp_filter_append_observer(wr_rtp_filter_t * filter, wr_rtp_filter_t * o
 /**
  * Notify all observers that new RTP data frame was transmitted
  */
-void wr_rtp_filter_notify_observers(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet);
+void wr_rtp_filter_notify_observers(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet, int asc);
 
 /**
  * Generic notify callback function (do nothing)
  * Used for example for filters which have not input subject filters (such as input wavfile filter)
  */
-wr_errorcode_t wr_do_nothing_on_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet);
+wr_errorcode_t wr_do_nothing_on_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet, int asc);
 
 /** @} */
 

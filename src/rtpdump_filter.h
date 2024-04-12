@@ -47,6 +47,6 @@
  * Store data into file 
  * This method is invoked when filter is notified
  */
-wr_errorcode_t wr_rtpdump_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet);
+wr_errorcode_t wr_rtpdump_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet, int asc);
 
 #endif

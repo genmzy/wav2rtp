@@ -1,6 +1,6 @@
 /*
  * $Id$
- * 
+ *
  * Copyright (c) 2007, R.Imankulov
  *
  * All rights reserved.
@@ -115,13 +115,13 @@ void wr_rtp_packet_destroy(wr_rtp_packet_t * rtp_packet)
 wr_errorcode_t wr_rtp_packet_add_frame(wr_rtp_packet_t * packet, uint8_t * data, size_t size, int length_in_ms)
 {
     /* XXX: no checks for calloc unsucessfull call */
-    wr_data_frame_t * frame = calloc(1, sizeof(wr_data_frame_t));    
+    wr_data_frame_t * frame = calloc(1, sizeof(wr_data_frame_t));
     frame->data = calloc(size, sizeof(uint8_t));
     memcpy(frame->data, data, size * sizeof(uint8_t));
     frame->size = size;
     frame->length_in_ms = length_in_ms;
     list_append(&packet->data_frames, frame);
-    return WR_OK; 
+    return WR_OK;
 }
 
 
@@ -132,8 +132,8 @@ int wr_rtp_packet_delete_frame(wr_rtp_packet_t * packet, int position)
     return 0;
 }
 
-void wr_rtp_filter_create(wr_rtp_filter_t * filter, char *name, 
-        wr_errorcode_t (*notify)(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet) 
+void wr_rtp_filter_create(wr_rtp_filter_t * filter, char *name,
+        wr_errorcode_t (*notify)(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet, int asc)
     )
 {
     memset(filter, 0, sizeof(wr_rtp_filter_t));
@@ -157,20 +157,20 @@ void wr_rtp_filter_append_observer(wr_rtp_filter_t * filter, wr_rtp_filter_t * o
 
 
 
-void wr_rtp_filter_notify_observers(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet)
+void wr_rtp_filter_notify_observers(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet, int asc)
 {
     int i;
     for (i=0; i<MAX_OBSERVERS; i++){
         wr_errorcode_t retval;
         wr_rtp_filter_t * observer = filter->observers[i];
         if (!observer) break;
-        retval = (*observer->notify)(observer, event, packet);
+        retval = (*observer->notify)(observer, event, packet, asc);
         switch(retval){
-            case WR_FATAL: 
-                fprintf(stderr, "%s\t%s: %s\n", "FATAL", filter->name, wr_error); 
+            case WR_FATAL:
+                fprintf(stderr, "%s\t%s: %s\n", "FATAL", filter->name, wr_error);
                 break;
             case WR_WARN:
-                fprintf(stderr, "%s\t%s: %s\n",  "WARNING", filter->name, wr_error); 
+                fprintf(stderr, "%s\t%s: %s\n",  "WARNING", filter->name, wr_error);
                 break;
             default:
                 break;
@@ -180,7 +180,7 @@ void wr_rtp_filter_notify_observers(wr_rtp_filter_t * filter, wr_event_type_t ev
 
 
 
-wr_errorcode_t wr_do_nothing_on_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet)
+wr_errorcode_t wr_do_nothing_on_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet, int asc)
 {
     /* Do nothing ;-) */
     return WR_OK;

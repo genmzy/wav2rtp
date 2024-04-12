@@ -36,7 +36,7 @@
 #include "independent_losses_filter.h"
 
 
-wr_errorcode_t wr_independent_losses_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet)
+wr_errorcode_t wr_independent_losses_filter_notify(wr_rtp_filter_t * filter, wr_event_type_t event, wr_rtp_packet_t * packet, int asc)
 {
     switch(event){
 
@@ -47,28 +47,28 @@ wr_errorcode_t wr_independent_losses_filter_notify(wr_rtp_filter_t * filter, wr_
             if (state->loss_rate < 0 )  state->loss_rate = 0;
             if (state->loss_rate > 1 )  state->loss_rate = 1;             
             filter->state = (void*)state;
-            wr_rtp_filter_notify_observers(filter, event, packet);
+            wr_rtp_filter_notify_observers(filter, event, packet, asc);
             return WR_OK;
         }
         case NEW_PACKET: {
             double rand_val;
             wr_independent_losses_filter_state_t * state = (wr_independent_losses_filter_state_t * ) (filter->state);
             if (!state->enabled){
-                wr_rtp_filter_notify_observers(filter, event, packet);
+                wr_rtp_filter_notify_observers(filter, event, packet, asc);
                 return WR_OK;
             }
             int lost;
             rand_val = (double) rand() / RAND_MAX;
             lost = (rand_val < state->loss_rate) ? 1 : 0;
             if (!lost){
-                wr_rtp_filter_notify_observers(filter, event, packet);
+                wr_rtp_filter_notify_observers(filter, event, packet, asc);
             }
             return WR_OK;
         }
         case TRANSMISSION_END: {
             wr_independent_losses_filter_state_t * state = (wr_independent_losses_filter_state_t * ) (filter->state);
             free(state);
-            wr_rtp_filter_notify_observers(filter, event, packet);
+            wr_rtp_filter_notify_observers(filter, event, packet, asc);
             return WR_OK;
         }
     }  

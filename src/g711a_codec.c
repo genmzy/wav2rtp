@@ -75,9 +75,9 @@ int wr_g711a_encode(void * state, const short * input, char * output)
     wr_g711a_encoder_state *  s =  (wr_g711a_encoder_state * )state;
     for (i=0; i < s->buffer_size; i++){
         output[i] = (char)linear2alaw((int)(input[i]));
-    }    
+    }
     return s->buffer_size;
-} 
+}
 
 
 /* DECODER */
