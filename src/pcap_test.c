@@ -60,8 +60,8 @@ int main(int argc, char ** argv)
     /* Create empty test pcap file */
     {
         wr_options.output_filename = "testdata/empty_test.pcap";
-        CHECK( wr_pcap_filter_notify(&pcap_filter, TRANSMISSION_START, NULL) );
-        CHECK( wr_pcap_filter_notify(&pcap_filter, TRANSMISSION_END, NULL) );
+        CHECK( wr_pcap_filter_notify(&pcap_filter, TRANSMISSION_START, NULL, 1) );
+        CHECK( wr_pcap_filter_notify(&pcap_filter, TRANSMISSION_END, NULL, 1) );
         CHECK( files_are_equals("testdata/empty_test.pcap", "testdata/empty_test.pcap.ref", 1024));
     }
     /* Create pcap file with just one packet */
@@ -73,9 +73,9 @@ int main(int argc, char ** argv)
 
         CHECK( wr_rtp_packet_init(&p, 0, 0, 0, 0, tv) );
         CHECK( wr_rtp_packet_add_frame(&p, data, 8, 1000) );
-        CHECK( wr_pcap_filter_notify(&pcap_filter, TRANSMISSION_START, NULL));
-        CHECK( wr_pcap_filter_notify(&pcap_filter, NEW_PACKET, &p));
-        CHECK( wr_pcap_filter_notify(&pcap_filter, TRANSMISSION_END, NULL));
+        CHECK( wr_pcap_filter_notify(&pcap_filter, TRANSMISSION_START, NULL, 1));
+        CHECK( wr_pcap_filter_notify(&pcap_filter, NEW_PACKET, &p, 1));
+        CHECK( wr_pcap_filter_notify(&pcap_filter, TRANSMISSION_END, NULL, 1));
         CHECK( files_are_equals("testdata/one_packet_test.pcap", "testdata/one_packet_test.pcap.ref", 1024));
     }
     return WR_OK;
