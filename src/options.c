@@ -48,7 +48,7 @@
 #include <io.h>
 #endif
 
-wr_options_t wr_options;
+wr_options_t wr_options = { 0 };
 
 static void print_usage(const char * confdir)
 {
@@ -63,7 +63,9 @@ static void print_usage(const char * confdir)
             "  -m, --format             \tOutput Format (pcap or rtpdump)\n"
             "  -c, --codec-list         \tComma separated list of codecs (without spaces), which will be used to encode .wav file\n"
             "  -o, --output-option      \tOutput option which redefine %s/output.conf. Recorded in form \"section:key=value\"\n"
-            "  -O, --codecs-option       \tCodec option which redefine %s/codecs.conf. Recorded in the form \"section:key=value\"\n"
+            "  -O, --codecs-option      \tCodec option which redefine %s/codecs.conf. Recorded in the form \"section:key=value\"\n"
+		    "  -l, --left-only          \tChannel option which specify should covert left channel, note these should not with -r/--right-only\n"
+		    "  -r, --right-only         \tChannel option which specify should covert right channel, note these should not with -l/--left-only\n"
             "\n"
             "Codecs options (such as payload type and other) may be defined in the config file: %s/codecs.conf\n"
             "\n"
@@ -114,14 +116,16 @@ wr_errorcode_t get_options(const int argc, char * const argv[],
     const char * default_output = CONFDIR "/output.conf";
     int need_define_codec_list = 0;
     static struct option long_options[] = {
-        {"help", 0, NULL, 'h', }, 
-        {"version", 0, NULL, 'h', }, 
-        {"from-file", 1, NULL, 'f', }, 
-        {"codec-list", 1, NULL, 'c', }, 
-        {"output-option", 1, NULL, 'o', },
-        {"codecs-option", 1, NULL, 'O', },
-        {"to-file", 1, NULL, 't', }, 
-        {"format", 1, NULL, 'm', },
+        {"help", no_argument, NULL, 'h', }, 
+        {"version", no_argument, NULL, 'h', }, 
+		{"left-only", no_argument, &wr_options.only_left, 1},
+		{"right-only", no_argument, &wr_options.only_right, 1},
+        {"from-file", required_argument, NULL, 'f', }, 
+        {"codec-list", required_argument, NULL, 'c', }, 
+        {"output-option", required_argument, NULL, 'o', },
+        {"codecs-option", required_argument, NULL, 'O', },
+        {"to-file", required_argument, NULL, 't', }, 
+        {"format", required_argument, NULL, 'm', },
         {0, 0, 0, 0},
     };
 #ifdef _WIN32
@@ -170,7 +174,7 @@ wr_errorcode_t get_options(const int argc, char * const argv[],
 
     while(1){
         int option_index = 0;
-        c = getopt_long(argc, argv, "hvf:c:o:O:t:m:", long_options, &option_index);
+        c = getopt_long(argc, argv, "hvlrf:c:o:O:t:m:", long_options, &option_index);
         if (c == -1)
             break;
         switch(c){
@@ -181,6 +185,12 @@ wr_errorcode_t get_options(const int argc, char * const argv[],
                 printf("%s\n", VERSION);
                 version++;
                 break;
+			case 'l':
+				wr_options.only_left = 1;
+				break;
+			case 'r':
+				wr_options.only_right = 1;
+				break;
             case 'f':
                 wr_options.filename = optarg;
                 fset ++;
@@ -224,6 +234,11 @@ wr_errorcode_t get_options(const int argc, char * const argv[],
         wr_set_error("not enough of input arguments");
         return WR_FATAL;
     }
+	if (wr_options.only_left && wr_options.only_right) {
+		wr_set_error("cannot use -l/--left-only and -r/right-only together, remove both will make left and right both work");
+		return WR_FATAL;
+	}
+
     if (!wr_options.output_filename){
         wr_set_error("output filename is not set");
         return WR_FATAL;

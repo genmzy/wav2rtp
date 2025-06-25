@@ -60,6 +60,8 @@ typedef struct __wr_options {
     dictionary * codecs_options; /**< Dictionary of codec options given from /etc/wav2rtp/codecs.conf */
     dictionary * output_options; /**< Dictionary of output options given from /etc/wav2rtp/output.conf */
 
+	int only_left;
+	int only_right;
 } wr_options_t;
 
 /** global application options */

@@ -115,8 +115,12 @@ wr_errorcode_t wr_wavfile_filter_start(wr_rtp_filter_t *filter)
         return WR_FATAL;
     }
 
-    wr_rtp_packet_wrap_init(1, &lwrap, &global);
-    wr_rtp_packet_wrap_init(0, &rwrap, &global);
+	if (wr_options.only_left || (!wr_options.only_left && !wr_options.only_right)) {
+		wr_rtp_packet_wrap_init(1, &lwrap, &global);
+	}
+	if (wr_options.only_right || (!wr_options.only_left && !wr_options.only_right)) {
+		wr_rtp_packet_wrap_init(0, &rwrap, &global);
+	}
 
     for ( ; global.codec; ) {
         int bufin_size = (global.codec->get_input_buffer_size)(global.codec->state);
@@ -124,13 +128,21 @@ wr_errorcode_t wr_wavfile_filter_start(wr_rtp_filter_t *filter)
         memset(bufin, 0, bufin_size * finfo.channels);
 
         short lbuf[bufin_size], rbuf[bufin_size];
-        wr_rtp_packet_assign_buf(&lwrap, lbuf, bufin_size);
-        wr_rtp_packet_assign_buf(&rwrap, rbuf, bufin_size);
+		if (wr_options.only_left || (!wr_options.only_left && !wr_options.only_right)) {
+			wr_rtp_packet_assign_buf(&lwrap, lbuf, bufin_size);
+		}
+		if (wr_options.only_right || (!wr_options.only_left && !wr_options.only_right)) {
+			wr_rtp_packet_assign_buf(&rwrap, rbuf, bufin_size);
+		}
 
         int n = sf_readf_short(file, bufin, bufin_size);
         if (n == 0) {
-            wr_rtp_packet_wrap_handle(&lwrap, &global);
-            wr_rtp_packet_wrap_handle(&rwrap, &global);
+			if (wr_options.only_left || (!wr_options.only_left && !wr_options.only_right)) {
+				wr_rtp_packet_wrap_handle(&lwrap, &global);
+			}
+			if (wr_options.only_right || (!wr_options.only_left && !wr_options.only_right)) {
+				wr_rtp_packet_wrap_handle(&rwrap, &global);
+			}
             sf_seek(file, 0, SEEK_SET);
             if (list_iterator_hasnext(wr_options.codec_list)) {
                 global.codec = (wr_encoder_t *)list_iterator_next(wr_options.codec_list);
@@ -143,11 +155,19 @@ wr_errorcode_t wr_wavfile_filter_start(wr_rtp_filter_t *filter)
         wr_rtp_packet_wrap_t *wrap;
         for (int k = 0, left = 1; k < n*finfo.channels; ++k) {
             wrap = left ? &lwrap : &rwrap;
-            wr_rtp_packet_fill_short(wrap, *(bufin+k));
+
+			if (!(wr_options.only_right && left) && !(wr_options.only_left && !left)) {
+				wr_rtp_packet_fill_short(wrap, *(bufin+k));
+			}
+
             left = (finfo.channels == 2 && left) ? 0 : 1;
         }
-        wr_rtp_packet_wrap_handle(&lwrap, &global);
-        wr_rtp_packet_wrap_handle(&rwrap, &global);
+		if (wr_options.only_left || (!wr_options.only_left && !wr_options.only_right)) {
+			wr_rtp_packet_wrap_handle(&lwrap, &global);
+		}
+		if (wr_options.only_right || (!wr_options.only_left && !wr_options.only_right)) {
+			wr_rtp_packet_wrap_handle(&rwrap, &global);
+		}
     }
 
     return WR_OK;
